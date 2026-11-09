@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import useProducts from '../hooks/useProducts';
+import useCategories from '../hooks/useCategories';
 import { PAGE_SIZE } from '../api/products';
 import CatalogFilters from '../components/CatalogFilters';
 import ProductCard from '../components/ProductCard';
@@ -18,6 +19,8 @@ export default function Home() {
   const requested = Number(params.get('page'));
   const page = Number.isSafeInteger(requested) && requested > 0 ? requested : 1;
   const products = useProducts({ search, category, page, sort });
+  const categories = useCategories();
+  const categoryName = categories.data?.find(item => item.slug === category)?.name || category;
   const pages = Math.max(1, Math.ceil((products.data?.total || 0) / PAGE_SIZE));
   useEffect(() => {
     if (products.data && page > pages) {
@@ -47,7 +50,7 @@ export default function Home() {
         <h2 id="catalog-title">{search ? `Søk: «${search}»` : 'Utforsk utvalget'}<span className="result-count">{products.data?.total ?? '…'}</span></h2>
       </div><span className="catalog-note">Utvalgte ting. Uendelige muligheter.</span></div>
       <CatalogFilters category={category} sort={sort} onChange={change} />
-      {(search || category) && <div className="active-filters"><span>{category || 'Alle kategorier'}{search && ` · ${search}`}</span>
+      {(search || category) && <div className="active-filters"><span>{categoryName || 'Alle kategorier'}{search && ` · ${search}`}</span>
         <button className="text-button" onClick={() => setParams({})}>Nullstill filtre ×</button></div>}
       {products.isPending ? <ProductSkeleton /> : products.isError
         ? <StatusPanel title="Vi fikk ikke hentet produktene" onRetry={() => products.refetch()}>Sjekk nettforbindelsen og prøv igjen.</StatusPanel>

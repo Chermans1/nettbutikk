@@ -1,110 +1,83 @@
-# Nord — React-nettbutikk
+# Nord - React-nettbutikk
 
-En responsiv demobutikk med produkter fra DummyJSON. Du kan søke, filtrere på kategori,
-sortere, bla mellom sider og åpne hvert produkt på egen URL. Handlekurven samler like
-produkter, lar deg endre antall og viser totalsum. Kurv og lys/mørk modus huskes lokalt.
-Grensesnittet er norsk; produkttekster og kategorinavn kommer fra API-et på engelsk.
-Prisene vises i USD uten valutakonvertering.
+Prosjektoppgave i React (Kodehode, Modul 3). En responsiv demobutikk med produkter fra DummyJSON.
+Du kan søke, filtrere på kategori, sortere, bla mellom sider og åpne hvert produkt på egen URL.
+Handlekurven samler like produkter, lar deg endre antall og viser totalsum. Kurv og lys/mørk
+modus huskes i nettleseren. Grensesnittet er norsk; produkttekster og kategorinavn kommer fra
+API-et på engelsk, og prisene vises i USD slik API-et oppgir dem.
+
+- Kildekode: https://github.com/Chermans1/nettbutikk
+- Publisert: https://nettbutikk-hazel.vercel.app
 
 ## Teknologier og valg
 
-- React og Vite for komponenter, lokal utvikling og produksjonsbygg.
-- React Router med `createBrowserRouter` for `/`, `/products/:id`, `/cart` og `*`.
-  `Layout` bruker `Outlet` for felles header og footer.
-- Axios for et samlet API-lag, med egne funksjoner for produkter og kategorier.
-- TanStack Query for caching, loading, feil og nye forsøk. Søk, kategori, side og
-  sortering er del av query-nøkkelen slik at resultatene holdes adskilt.
-- Separate Context-er for handlekurv og tema, med `localStorage` gjennom en egen hook.
-- Vanlig CSS med variabler for tema og media queries for mobil, uten CSS-rammeverk.
+- **React 19 og Vite** for komponenter, lokal utvikling og produksjonsbygg.
+- **React Router** med `createBrowserRouter` for `/`, `/products/:id`, `/cart` og `*`.
+  `Layout` bruker `Outlet`, så header og footer er synlige på alle sider.
+- **Axios** for ett samlet API-lag i `src/api/`, med egne funksjoner for produkter og kategorier.
+  Komponentene vet ikke hvor dataene kommer fra.
+- **TanStack Query** for caching, loading, feil og nye forsøk. Søk, kategori, side og sortering
+  er del av query-nøkkelen, så hvert resultat caches for seg.
+- **To separate Context-er**, én for handlekurv og én for tema, begge lagret i `localStorage`
+  gjennom en felles `useLocalStorage`-hook.
+- **Vanlig CSS** med variabler for tema og media queries for mobil. Ingen CSS-rammeverk, for å
+  bruke tiden på React-logikken i stedet for å lære et nytt verktøy.
 
 ## Kjør lokalt
 
-Du trenger Node.js 22.12 eller nyere.
+Krever Node.js 22.12 eller nyere.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Åpne adressen Vite viser i terminalen (normalt http://127.0.0.1:5173).
-
-```sh
-npm run build
-npm run preview
-```
-
-`npm run build` lager produksjonsfiler i `dist/`.
-Ingen API-nøkler eller miljøvariabler er nødvendig.
+Åpne adressen Vite viser (normalt http://127.0.0.1:5173). `npm run build` lager produksjonsfiler
+i `dist/`, og `npm run preview` viser dem lokalt. Ingen API-nøkler eller miljøvariabler er nødvendig.
 
 ## Struktur
 
 ```text
 src/
-  api/          Axios og all kommunikasjon med DummyJSON
-  components/   Layout, header, søk, produktkort, filtre og andre gjenbrukbare deler
+  api/          Axios-klient og all kommunikasjon med DummyJSON
+  components/   Gjenbrukbare deler: Layout, Header, SearchForm, ProductCard, Pagination, CartItem ...
   context/      CartContext og ThemeContext med hver sin provider
   hooks/        useLocalStorage og egne Query-hooks for datahenting
-  pages/        Home, ProductDetails, Cart og NotFound
+  pages/        Home, ProductDetails, Cart og NotFound (én fil per rute)
   utils/        Rene funksjoner for kurvlogikk og formatering
   App.jsx       Router og ruter
   main.jsx      Providers og oppstart
   styles.css    Responsiv styling og begge temaer
 ```
 
-## Viktige detaljer
+## Slik virker det
 
-Søk sendes ved Enter eller søkeknappen. Filtre og sidenummer lagres i URL-en slik
-at tilbakeknappen og delte lenker fungerer. Endring av søk, kategori eller sortering
-nullstiller sidenummeret. Ugyldig eller for høyt sidenummer håndteres også.
+Søk sendes ved Enter eller søkeknappen. Søk, kategori, sortering og sidenummer ligger i URL-en,
+så tilbakeknappen og delte lenker virker. Endres søk, kategori eller sortering, nullstilles
+sidenummeret. Et sidenummer utenfor utvalget flyttes til siste gyldige side.
 
-API-et har ikke et kombinert kategori- og søkeendepunkt. Når begge brukes, hentes
-hele kategorien med `limit=0`, før søket filtreres og pagineres i API-laget. Ellers
-brukes API-ets `limit` og `skip`, og antall sider beregnes fra `total`.
+DummyJSON har ikke et endepunkt som kombinerer søk og kategori. Brukes begge samtidig, hentes
+hele kategorien med `limit=0`, og søket filtreres og pagineres i API-laget. Ellers brukes
+API-ets `limit` og `skip`, og antall sider regnes ut fra `total`.
 
-Kurvoppdateringene lager nye objekter og arrays. Penger summeres i hele cent for
-å unngå avrundingsfeil. Antallet kan ikke overstige produktets lagerbeholdning.
-Hvis lagrede data ikke kan leses som JSON, brukes startverdien. Dersom nettleseren
-blokkerer lagring, fungerer kurven fremdeles i den åpne økten.
+Kurven oppdateres uten å mutere: hver endring lager nye objekter og arrays. Samme produkt to
+ganger gir antall 2, ikke to rader, og antallet kan ikke overstige lagerbeholdningen. Summer
+regnes i hele cent for å unngå avrundingsfeil. Kan ikke lagrede data leses som JSON, brukes
+startverdien, og blokkerer nettleseren lagring, virker kurven likevel i den åpne økten.
 
-## Publisering og innlevering
-
-Opprett et GitHub-repo og last opp kildekoden, inkludert `package-lock.json`.
-Ikke last opp `node_modules` eller `dist` i repoet.
-
-**Netlify:** Importer GitHub-repoet. Dersom `nettbutikk` ligger i roten av repoet,
-velg den som base directory. Byggkommandoen er `npm run build`, og output er `dist`.
-`netlify.toml` og `public/_redirects` sørger for at direkte produktlenker fungerer.
-Du kan også bygge lokalt og laste opp `dist` med Netlify Drop.
-
-**Vercel:** Importer repoet og velg Vite som preset. Bruk `nettbutikk` som root directory
-hvis mappen ligger inne i repoet. `vercel.json` gir fallback til React for direkte URL-er.
-
-Test den publiserte løsningen i privat nettleservindu:
-
-- Åpne forsiden og bla frem og tilbake mellom sider.
-- Søk med treff og uten treff; velg kategori og nullstill filtrene.
-- Åpne en produktlenke direkte i en ny fane og oppdater siden.
-- Legg samme vare i kurven to ganger, endre antall og fjern varen.
-- Oppdater siden og kontroller at kurv og tema beholdes.
-- Test mobilbredde, mørk modus, en ukjent URL og nettverksfeil.
-
-Lever både GitHub-repoets URL og den offentlige nettsteds-URL-en.
+Lys og mørk modus settes som `data-theme` på `<html>`, og CSS-variablene gjør resten.
 
 ## Avgrensninger og videre arbeid
 
-Dette er en demobutikk uten betaling, innlogging eller bestilling. Lagerdata kommer
-fra et eksempel-API og reserveres ikke. Kurven huskes i én nettleser; ingen synkronisering
-mellom enheter. Videre arbeid kan være bildekarusell, debounce, nylig sette produkter,
-automatiske tester, grundigere validering av lagrede data og oppdatering av pris/lager
-ved gjenåpning av kurven.
+Dette er en demobutikk uten betaling, innlogging eller bestilling. Lagerdata kommer fra et
+eksempel-API og reserveres ikke, og kurven huskes bare i én nettleser.
 
-## Kodegjennomgang
+Mulige utvidelser: bildekarusell på detaljsiden (produktene har flere bilder), debounce på
+søkefeltet, «nylig sett»-liste, automatiske tester av kurvlogikken, og oppdatering av pris og
+lager når en lagret kurv åpnes igjen.
 
-Se [GJENNOMGANG.md](GJENNOMGANG.md) for sammenhengen med undervisningsmaterialet,
-forklaring av mindre utvidelser og forslag til rekkefølge når koden skal gjennomgås.
-
-## Dokumentasjon
+## Kilder
 
 - [DummyJSON Products](https://dummyjson.com/docs/products)
-- [React Router createBrowserRouter](https://reactrouter.com/6.30.1/routers/create-browser-router)
+- [React Router: createBrowserRouter](https://reactrouter.com/6.30.1/routers/create-browser-router)
 - [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview)
